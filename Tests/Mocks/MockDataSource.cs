@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 using MathNet.Numerics;
 using MathNet.Numerics.Distributions;
 using MathNet.Numerics.Interpolation;
-using NUnit.Framework;
 using Saturday.Finance;
 using Saturday.Finance.Data;
 
-namespace Tests.Mockups;
+namespace Tests.Mocks;
 
 /// <summary>
 /// A mock data source that provides random data.
@@ -27,6 +25,17 @@ public class MockDataSource : IDataSource
         var year = time.Year;
         var month = time.Month;
         // Look up stored data, generating it if necessary.
+        var monthlyData = EnsureData(stock, year);
+        
+        // Interpolate between the months.
+        var monthStart = new DateTimeOffset(year, month + 1, 1, 0, 0, 0, time.Offset);
+        var timeSinceMonthStart = time - monthStart;
+        return (decimal) monthlyData.Interpolate(timeSinceMonthStart.TotalMilliseconds / MILLISECONDS_PER_MONTH);
+
+    }
+
+    private IInterpolation EnsureData(Stock stock, int year)
+    {
         if (!data.TryGetValue(year, out var monthlyDataByStock))
         {
             monthlyDataByStock = data[year] = new Dictionary<Stock, IInterpolation>();
@@ -44,10 +53,12 @@ public class MockDataSource : IDataSource
                 monthSamples);
         }
 
-        // Interpolate between the months.
-        var monthStart = new DateTimeOffset(year, month + 1, 1, 0, 0, 0, time.Offset);
-        var timeSinceMonthStart = time - monthStart;
-        return (decimal) monthlyData.Interpolate(timeSinceMonthStart.TotalMilliseconds / MILLISECONDS_PER_MONTH);
+        return monthlyData;
+    }
 
+    public decimal GetMarketCapitalization(Stock stock, DateTimeOffset time)
+    {
+        var interp = EnsureData(stock, time.Year);
+        return (decimal)(interp.Interpolate(0) * 100000);
     }
 }

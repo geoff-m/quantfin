@@ -5,7 +5,7 @@ using NUnit.Framework;
 using Saturday.Finance;
 using Saturday.Finance.Data;
 using Saturday.Finance.Strategies;
-using Tests.Mockups;
+using Tests.Mocks;
 
 namespace Tests;
 

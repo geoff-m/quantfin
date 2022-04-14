@@ -41,4 +41,11 @@ public interface IDataSource
         return portfolio.Contents.Sum(kvp => GetPrice(kvp.Key, time) * kvp.Value);
     }
 
+
+    decimal GetMarketCapitalization(Stock stock, DateTimeOffset time);
+
+    decimal GetMarketCapitalization(Stock stock)
+    {
+        return GetMarketCapitalization(stock, DateTimeOffset.Now);
+    }
 }
